@@ -6,13 +6,15 @@ from Link import Link
 
 
 class Node:
-    def __init__(self, node_id, links, bias, sigmoid_function):
+    def __init__(self, node_id, links, bias, sigmoid_function, sigmoid_derivative_function):
         self.node_id = node_id
         self.activation = None
         self.links = links
         self.bias = bias
         self.sigmoid_function = sigmoid_function
+        self.sigmoid_derivative_function = sigmoid_derivative_function
         self.z = 0
+        self.sigmoid_derivative = 0
         self.node_print("initializing node")
 
     def node_print(self, message):
@@ -22,10 +24,12 @@ class Node:
         if self.activation is None:
             reduced = reduce(lambda a, link: a + self.compute_link_value(link), self.links, 0)
             z = reduced + self.bias
-            self.node_print("before sigmoid: " + str(z))
+            self.node_print("z: " + str(z))
             self.z = z
             self.activation = round(self.sigmoid_function(z), 2)
+            self.sigmoid_derivative = self.sigmoid_derivative_function(z)
             self.node_print("calculated my activation " + str(self.activation))
+            self.node_print("calculated my sigmoid_derivative " + str(self.sigmoid_derivative))
 
         return self.activation
 
@@ -45,12 +49,12 @@ class Node:
         # zderivitive = get_z_derivitive()
 
     @staticmethod
-    def build(node_id, upstream_layer, weights, bias, sigmoid_function):
+    def build(node_id, upstream_layer, weights, bias, sigmoid_function, sigmoid_derivative_function):
 
         links = []
         if upstream_layer is None:
-            return Node(node_id, [], bias, sigmoid_function)
+            return Node(node_id, [], bias, sigmoid_function, sigmoid_derivative_function)
         for i, upstream_node in enumerate(upstream_layer.nodes):
             links.append(Link(upstream_node, weights[i]))
 
-        return Node(node_id, links, bias, sigmoid_function)
+        return Node(node_id, links, bias, sigmoid_function, sigmoid_derivative_function)

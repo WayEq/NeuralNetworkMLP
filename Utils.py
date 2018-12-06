@@ -7,6 +7,12 @@ class Utils:
     @staticmethod
     def sigmoid_function(x): return 1 / (1 + e**(-x))
 
+    # TODO: figure out how to compute this based on the sigmoid_function used
+    @staticmethod
+    def sigmoid_derivative_function(x):
+        y = Utils.sigmoid_function(x)
+        return y * (1 - y)
+
     @staticmethod
     def node_weight_provider(number_of_weights):
         weights = []

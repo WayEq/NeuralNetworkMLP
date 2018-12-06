@@ -20,7 +20,7 @@ class NeuralNetwork:
         previous_layer = None
         for layer_index in range(network_config.number_layers):
             layer = layer_builder(previous_layer, str(layer_index), network_config.nodes_per_layer[layer_index],
-                                  network_config.node_weight_provider, network_config.node_bias_provider, network_config.sigmoid_function, Node.build)
+                                  network_config.node_weight_provider, network_config.node_bias_provider, network_config.sigmoid_function, network_config.sigmoid_derivative_function, Node.build)
             layers.append(layer)
             previous_layer = layer
         return NeuralNetwork(layers)

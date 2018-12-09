@@ -24,7 +24,7 @@ class Utils:
     def node_bias_provider(): return 0
 
     @staticmethod
-    def calculate_cost(desired, actual):
+    def cost_function(desired, actual):
         if len(desired) != len(actual):
             return None
         cost = 0
@@ -32,3 +32,9 @@ class Utils:
             cost += (desired - actual[i])**2
 
         return cost
+
+    # TODO: figure out how to compute this based on the cost_function used
+    @staticmethod
+    def cost_derivative_function(desired, actual):
+        return -2 * (desired - actual)
+

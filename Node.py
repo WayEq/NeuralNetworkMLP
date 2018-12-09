@@ -1,7 +1,5 @@
 from functools import reduce
 
-from scipy.stats import logistic
-
 from Link import Link
 
 
@@ -44,9 +42,11 @@ class Node:
         self.node_print("Setting activation of input node")
         self.activation = activation
 
-    # def calculate_error(self, cost_derivitive):
-        # figure out how much tweaking z affects cost
-        # zderivitive = get_z_derivitive()
+    def get_z_value(self):
+        return self.z
+
+    def get_weights(self):
+        return [link.weight for link in self.links]
 
     @staticmethod
     def build(node_id, upstream_layer, weights, bias, sigmoid_function, sigmoid_derivative_function):

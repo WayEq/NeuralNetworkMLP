@@ -1,5 +1,7 @@
 from random import uniform
 from math import e
+from functools import reduce
+
 
 
 class Utils:
@@ -17,7 +19,8 @@ class Utils:
     def node_weight_provider(number_of_weights):
         weights = []
         for i in range(number_of_weights):
-            weights.append(round(uniform(-1, 1), 2))
+            # weights.append(round(uniform(-1, 1), 2))
+            weights.append(1)
         return weights
 
     @staticmethod
@@ -27,11 +30,14 @@ class Utils:
     def cost_function(desired, actual):
         if len(desired) != len(actual):
             return None
-        cost = 0
-        for i, desired in enumerate(desired):
-            cost += (desired - actual[i])**2
+        pairs = zip(desired, actual)
+        first = Utils.single_node_cost(pairs.__next__())
+        return reduce(lambda x,y: x + Utils.single_node_cost(y), pairs, first)
 
-        return cost
+    @staticmethod
+    def single_node_cost(pair):
+        delta = pair[0] - pair[1]
+        return (delta) ** 2
 
     # TODO: figure out how to compute this based on the cost_function used
     @staticmethod

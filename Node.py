@@ -12,7 +12,6 @@ class Node:
         self.sigmoid_function = sigmoid_function
         self.sigmoid_derivative_function = sigmoid_derivative_function
         self.z = 0
-        self.sigmoid_derivative = 0
         self.node_print("initializing node")
 
     def node_print(self, message):
@@ -24,10 +23,8 @@ class Node:
             z = reduced + self.bias
             self.node_print("z: " + str(z))
             self.z = z
-            self.activation = round(self.sigmoid_function(z), 2)
-            self.sigmoid_derivative = self.sigmoid_derivative_function(z)
+            self.activation = self.sigmoid_function(z)
             self.node_print("calculated my activation " + str(self.activation))
-            self.node_print("calculated my sigmoid_derivative " + str(self.sigmoid_derivative))
 
         return self.activation
 
@@ -47,6 +44,20 @@ class Node:
 
     def get_weights(self):
         return [link.weight for link in self.links]
+
+    def get_links(self):
+        return self.links
+
+    def get_bias(self):
+        return self.bias
+
+    def set_bias(self, bias):
+        self.bias = bias
+
+    def clear_activation(self):
+        self.node_print("Clearing act")
+        self.activation = None
+
 
     @staticmethod
     def build(node_id, upstream_layer, weights, bias, sigmoid_function, sigmoid_derivative_function):

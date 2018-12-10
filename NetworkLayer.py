@@ -17,14 +17,6 @@ class NetworkLayer:
             nodes.append(node)
         return NetworkLayer(layer_id, nodes)
 
-    def get_activation(self):
-        result = []
-
-        for i, node in enumerate(self.nodes):
-            result.append(node.get_activation())
-
-        return result
-
     def get_node(self, node_index):
         return self.nodes[node_index]
 
@@ -35,4 +27,10 @@ class NetworkLayer:
         return [node.get_z_value() for node in self.nodes]
 
     def get_weights(self):
-        return [node.get_weights for node in self.nodes]
+        return [node.get_weights() for node in self.nodes]
+
+    def get_activations(self):
+        return [node.get_activation() for node in self.nodes]
+
+    def clear_activations(self):
+        list(map(lambda node: node.clear_activation(), self.nodes))

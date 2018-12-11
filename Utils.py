@@ -3,7 +3,6 @@ from math import e
 from functools import reduce
 
 
-
 class Utils:
 
     @staticmethod
@@ -19,8 +18,8 @@ class Utils:
     def node_weight_provider(number_of_weights):
         weights = []
         for i in range(number_of_weights):
-            # weights.append(round(uniform(-1, 1), 2))
-            weights.append(1)
+            weights.append(round(uniform(-1, 1), 2))
+            # weights.append(1)
         return weights
 
     @staticmethod
@@ -44,3 +43,6 @@ class Utils:
     def cost_derivative_function(desired, actual):
         return -2 * (desired - actual)
 
+    @staticmethod
+    def add_to_average(previous_average, denominator, new_value):
+        return previous_average * ((denominator-1) / denominator) + new_value / denominator

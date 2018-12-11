@@ -9,34 +9,32 @@ class Node:
         self.activation = None
         self.links = links
         self.bias = bias
+        self.debug = False
         self.sigmoid_function = sigmoid_function
         self.sigmoid_derivative_function = sigmoid_derivative_function
         self.z = 0
-        self.node_print("initializing node")
 
     def node_print(self, message):
-        print(self.node_id + " " + message)
+        if (self.debug):
+            print(self.node_id + " " + message)
 
     def get_activation(self):
         if self.activation is None:
             reduced = reduce(lambda a, link: a + self.compute_link_value(link), self.links, 0)
             z = reduced + self.bias
-            self.node_print("z: " + str(z))
             self.z = z
             self.activation = self.sigmoid_function(z)
-            self.node_print("calculated my activation " + str(self.activation))
+            self.node_print("Node (in/b/z/a) " + str(round(reduced,4)) + " / " + str(round(self.bias,4))  + " / " + str(round(z,4)) + " / " + str(round(self.activation,4)))
 
         return self.activation
 
     def compute_link_value(self, link):
-        self.node_print("Link activation " + str(link.upstream_node.get_activation()))
-        self.node_print("Link weight " + str(link.weight))
         link_value = link.weight * link.upstream_node.get_activation()
-        self.node_print("Link value " + str(link_value))
+        self.node_print("Link (a/w/v) " + str(round(link.upstream_node.get_activation(),4)) +" / " + str(round(link.weight,4)) + " / " + str(round(link_value,4)))
         return link_value
 
     def set_activation(self, activation):
-        self.node_print("Setting activation of input node")
+        # self.node_print("Setting activation of input node")
         self.activation = activation
 
     def get_z_value(self):
@@ -55,7 +53,6 @@ class Node:
         self.bias = bias
 
     def clear_activation(self):
-        self.node_print("Clearing act")
         self.activation = None
 
 

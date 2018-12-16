@@ -1,6 +1,7 @@
 from random import uniform
 from math import e
 from functools import reduce
+import numpy as np
 
 
 class Utils:
@@ -16,11 +17,8 @@ class Utils:
 
     @staticmethod
     def node_weight_provider(number_of_weights):
-        weights = []
-        for i in range(number_of_weights):
-            weights.append(round(uniform(-1, 1), 2))
-            # weights.append(1)
-        return weights
+        weights_ = [round(uniform(-1, 1), 2) for _ in range(number_of_weights)]
+        return np.array(weights_)
 
     @staticmethod
     def node_bias_provider(): return 0
@@ -31,12 +29,12 @@ class Utils:
             return None
         pairs = zip(desired, actual)
         first = Utils.single_node_cost(pairs.__next__())
-        return reduce(lambda x,y: x + Utils.single_node_cost(y), pairs, first)
+        return reduce(lambda x, y: x + Utils.single_node_cost(y), pairs, first)
 
     @staticmethod
     def single_node_cost(pair):
         delta = pair[0] - pair[1]
-        return (delta) ** 2
+        return delta ** 2
 
     # TODO: figure out how to compute this based on the cost_function used
     @staticmethod

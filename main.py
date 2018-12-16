@@ -3,16 +3,16 @@ from NetworkPerformanceTuner import NetworkPerformanceTuner
 from NetworkConfig import NetworkConfig
 from NetworkLayer import NetworkLayer
 from Utils import Utils
+import pickle
 import numpy as np
 np.set_printoptions(precision=4)
-
+from tensorflow.examples.tutorials.mnist import input_data
 
 
 def output_layer_error_calculator(node_activations, node_z_values, desired_output):
     errors = []
     for i, z_value in enumerate(node_z_values):
         cost_derived = Utils.cost_derivative_function(desired_output[i], node_activations[i])
-        #print("Cost derived: " + str(cost_derived))
         activation_derived = Utils.sigmoid_derivative_function(z_value)
         error = cost_derived * activation_derived
         errors.append(error)
@@ -33,47 +33,86 @@ def regular_layer_error_calculator(layer_z_values, next_layer_weights, next_laye
     return errors
 
 
-def run_mini_batch():
+def run_mini_batch(input_batch, desired_batch):
     correct = 0
     total = 0
-    for i in range(0,len(desired)):
-        neural_network.set_input(inputs[i])
+    for i in range(0,len(desired_batch)):
+        neural_network.set_input(input_batch[i])
         neural_network.evaluate()
-        network_tuner.incr_evaluations()
-        current_desired = desired[i]
+        network_tuner.increment_evaluations()
+        current_desired = vectorized_result(desired_batch[i])
         errors = network_tuner.calculate_errors(current_desired)
         network_tuner.calculate_cost_gradient(errors)
-        #print("For desired: " + str(current_desired) + " i guessed: " + str(neural_network.get_output_node_activations()))
-        desired_number = i
         guessed = neural_network.get_highest_output()
-        # print("Desired: " + str(desired_number) + " guessed: " + str(guessed))
-        if desired_number == guessed:
+        if desired_batch[i] == guessed:
             correct += 1
         total += 1
         network_tuner.calculate_cost(current_desired)
-    print("Batch correct %: " + str(correct / total))
+    return correct, total
 
-config = NetworkConfig(4, [10, 16, 16, 10], Utils.node_weight_provider, Utils.node_bias_provider, Utils.sigmoid_function,
-                       Utils.sigmoid_derivative_function)
+
+number_layers = 4
+nodes_per_layer = [784, 16, 16, 10]
+#number_layers = 3
+#nodes_per_layer = [1,1,1]
+config = NetworkConfig(number_layers, nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
+                       Utils.sigmoid_function, Utils.sigmoid_derivative_function)
+
 neural_network = NeuralNetwork.build(config, NetworkLayer.build)
 
-learning_rate = .2
+load = True
+if load:
+    binary_file = open('network.bin',mode='rb')
+    network = pickle.load(binary_file)
+    neural_network.load(network.get_layers())
+
+learning_rate = 3
 network_tuner = NetworkPerformanceTuner(neural_network, regular_layer_error_calculator, output_layer_error_calculator,
                                         Utils.cost_function, learning_rate)
 
-def get(j):
-    l = [ 0 for j in range(0,10)]
-    l[j] = 1
-    return l
+
+mini_batch_size = 10
+epochs = 50
+#mini_batch_size=2
 
 
-inputs = [get(j) for j in [ i for i in range(0,10)]]
-desired = inputs
+def vectorized_result(label):
+    # return [label]
+    num_outputs = len(neural_network.get_output_node_activations())
+    vectorized = [0 for _ in range(num_outputs)]
+    vectorized[label] = 1
+    return vectorized
 
 
-iterations = 5000
+training_set_size = 60000
+data = input_data.read_data_sets("data/")
+inputs = data[0]._images[0:training_set_size]
+desired = data[0]._labels[0:training_set_size]
+#inputs = [[0],[1]]
+#desired = [0,1]
+total_correct = 0
+total_total = 0
+for e in range(0,epochs):
+    mini_batch_index = 0
+    epoch_correct = 0
+    epoch_total = 0
+    while mini_batch_index < len(inputs):
+        terminal = mini_batch_index+mini_batch_size
+        input_batch = inputs[mini_batch_index:terminal]
+        desired_batch = desired[mini_batch_index:terminal]
+        (correct, total) = run_mini_batch(input_batch, desired_batch)
+        epoch_correct += correct
+        epoch_total += total
+        network_tuner.tune()
+        network_tuner.end_of_batch_reset()
+        mini_batch_index = terminal
+    print("Epoch totals: " + str(epoch_correct) + " / " + str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
+    total_correct += epoch_correct
+    total_total += epoch_total
 
-for i in range(0,iterations):
-    run_mini_batch()
-    network_tuner.tune()
-    network_tuner.reset()
+print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
+
+binary_file = open('network.bin',mode='wb')
+my_pickled_mary = pickle.dump(neural_network, binary_file)
+binary_file.close()
+

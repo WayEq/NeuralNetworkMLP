@@ -7,20 +7,19 @@ class NeuralNetwork:
     def __init__(self, layers):
         self.layers = layers
 
-    def evaluate(self):
-        list(map(lambda my_layer: my_layer.clear_activations(), self.layers[1:]))
-        previous_layer_activations = self.layers[0].get_activations()
-        for i, layer in enumerate(self.layers[1:]):
+    def evaluate(self, input_activations):
+        previous_layer_activations = input_activations
+        for layer in self.layers:
             layer.feed_forward(previous_layer_activations)
             previous_layer_activations = layer.get_activations()
 
     @staticmethod
     def build(network_config, layer_builder):
         layers = []
-        number_of_upstream_nodes = 0
-        for layer_index in range(network_config.number_layers):
+        number_of_upstream_nodes = network_config.nodes_per_layer[0]
+        for layer_index in range(network_config.number_layers - 1):
             layer = layer_builder(number_of_upstream_nodes, str(layer_index),
-                                  network_config.nodes_per_layer[layer_index],
+                                  network_config.nodes_per_layer[layer_index+1],
                                   network_config.node_weight_provider, network_config.node_bias_provider,
                                   network_config.sigmoid_function)
             layers.append(layer)
@@ -39,6 +38,3 @@ class NeuralNetwork:
     def get_highest_output(self):
         activations = self.get_output_node_activations()
         return activations.index(max(activations))
-
-    def set_input(self, inputs):
-        self.layers[0].set_activations(inputs)

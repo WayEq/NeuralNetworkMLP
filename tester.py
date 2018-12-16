@@ -33,11 +33,11 @@ desired = data[2]._labels[0:training_set_size]
 total_correct = 0
 total_total = 0
 for e in range(0,training_set_size):
-    neural_network.set_input(inputs[e])
-    neural_network.evaluate()
+    neural_network.evaluate(inputs[e])
     output = neural_network.get_highest_output()
     print("I guessed " + str(output) + " actually " + str(desired[e]))
-    if (output == desired[e]): total_correct +=1
+    if output == desired[e]:
+        total_correct += 1
     total_total += 1
     img1_2d = np.reshape(inputs[e], (28, 28))
     # show it

@@ -16,12 +16,13 @@ class NetworkLayer:
         self.error = None
 
     @staticmethod
-    def build(upstream_size, layer_id, number_nodes, node_weight_provider, node_bias_provider, sigmoid_function):
+    def build(upstream_size, layer_id, number_nodes, node_weight_provider,
+              node_bias_provider, sigmoid_function):
         weights = np.empty((number_nodes, upstream_size))
         biases = [node_bias_provider() for _ in range(number_nodes)]
+
         for upstream_node in range(upstream_size):
-            w = node_weight_provider(number_nodes)
-            weights[:, upstream_node] = w
+            weights[:, upstream_node] = node_weight_provider(number_nodes)
 
         return NetworkLayer(layer_id, weights, biases, sigmoid_function)
 
@@ -45,21 +46,11 @@ class NetworkLayer:
     def get_activations(self):
         return self.activations
 
-    def clear_activations(self):
-        self.activations = None
-
     def set_activations(self, inputs):
         self.activations = inputs
 
     def apply_deltas(self, weight_deltas, bias_deltas):
-        if debug:
-            print("Applying weight deltas: " + str(weight_deltas) + " to existing weight: " + str(self.weights) +
-                  " yields: " + str(self.weights + weight_deltas))
         self.weights += weight_deltas
-        if debug:
-            print("Applying bias deltas: " + str(bias_deltas) + " to existing bias: " + str(self.biases) + " yields: "
-                  + str(self.biases + bias_deltas))
-
         self.biases += bias_deltas
 
     def get_biases(self):

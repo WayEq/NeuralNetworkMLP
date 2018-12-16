@@ -28,56 +28,51 @@ def regular_layer_error_calculator(layer_z_values, next_layer_weights, next_laye
         derived_sigmoid = Utils.sigmoid_derivative_function(val)
         error = derived_sigmoid * next_layer_errors_with_weights_applied[i]
         errors.append(error)
-    # print("errors: " + str(errors))
 
     return errors
 
 
 def run_mini_batch(input_batch, desired_batch):
-    correct = 0
-    total = 0
+    batch_correct = 0
+    batch_total = 0
     for i in range(0,len(desired_batch)):
-        neural_network.set_input(input_batch[i])
-        neural_network.evaluate()
+        neural_network.evaluate(input_batch[i])
         network_tuner.increment_evaluations()
         current_desired = vectorized_result(desired_batch[i])
         errors = network_tuner.calculate_errors(current_desired)
-        network_tuner.calculate_cost_gradient(errors)
+        network_tuner.calculate_cost_gradient(errors, input_batch[i])
         guessed = neural_network.get_highest_output()
         if desired_batch[i] == guessed:
-            correct += 1
-        total += 1
+            batch_correct += 1
+        batch_total += 1
         network_tuner.calculate_cost(current_desired)
-    return correct, total
+    return batch_correct, batch_total
 
 
 number_layers = 4
 nodes_per_layer = [784, 16, 16, 10]
-#number_layers = 3
-#nodes_per_layer = [1,1,1]
+
 config = NetworkConfig(number_layers, nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
                        Utils.sigmoid_function, Utils.sigmoid_derivative_function)
 
 neural_network = NeuralNetwork.build(config, NetworkLayer.build)
 
-load = True
+load = False
 if load:
     binary_file = open('network.bin',mode='rb')
     network = pickle.load(binary_file)
     neural_network.load(network.get_layers())
 
-learning_rate = 3
+learning_rate = 1
 network_tuner = NetworkPerformanceTuner(neural_network, regular_layer_error_calculator, output_layer_error_calculator,
-                                        Utils.cost_function, learning_rate)
+                                        Utils.cost_function, learning_rate, config)
 
 
 mini_batch_size = 10
-epochs = 50
-#mini_batch_size=2
+epochs = 5
 
 
 def vectorized_result(label):
-    # return [label]
     num_outputs = len(neural_network.get_output_node_activations())
     vectorized = [0 for _ in range(num_outputs)]
     vectorized[label] = 1
@@ -88,8 +83,7 @@ training_set_size = 60000
 data = input_data.read_data_sets("data/")
 inputs = data[0]._images[0:training_set_size]
 desired = data[0]._labels[0:training_set_size]
-#inputs = [[0],[1]]
-#desired = [0,1]
+
 total_correct = 0
 total_total = 0
 for e in range(0,epochs):

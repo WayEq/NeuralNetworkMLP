@@ -12,9 +12,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 np.set_printoptions(precision=4)
 
 
-number_layers = 4
 nodes_per_layer = [784, 16, 16, 10]
-config = NetworkConfig(number_layers, nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
+config = NetworkConfig(nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
                        Utils.sigmoid_function, Utils.sigmoid_derivative_function)
 
 neural_network = NeuralNetwork.build(config, NetworkLayer.build)
@@ -39,10 +38,10 @@ for e in range(0,training_set_size):
     if output == desired[e]:
         total_correct += 1
     total_total += 1
-    img1_2d = np.reshape(inputs[e], (28, 28))
+    #img1_2d = np.reshape(inputs[e], (28, 28))
     # show it
-    plt.subplot(111)
-    plt.imshow(img1_2d, cmap=plt.get_cmap('gray'))
-    plt.show()
+    # plt.subplot(111)
+    # plt.imshow(img1_2d, cmap=plt.get_cmap('gray'))
+    # plt.show()
 
 print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")

@@ -1,4 +1,4 @@
-from Utils import Utils
+import Utils
 import numpy as np
 
 # Responsible for evaluating network performance and telling the network what parameters to change
@@ -40,7 +40,7 @@ class NetworkPerformanceTuner:
 
     def calculate_cost(self, desired_output):
         output_activations = self.network.get_output_node_activations()
-        cost = self.cost_calculator(output_activations, desired_output)
+        cost = self.cost_calculator(desired_output, output_activations)
         self.average_cost = Utils.add_to_average(self.average_cost, self.batch_evaluations_counter, cost)
 
     def calculate_layer_errors(self, desired_output):
@@ -120,15 +120,10 @@ class NetworkPerformanceTuner:
             layer.apply_deltas(weight_variable_deltas[i], bias_variable_deltas[i])
 
     def tune(self):
-        if self.number_of_tunings > 0:
-            self.total_improvement += (self.previous_batch_cost - self.average_cost)
         if self.number_of_tunings % 1000 == 0:
-                self.flush_stats()
+            print("Current cost: " + str(self.average_cost))
         (weight_variable_deltas, bias_variable_deltas) = \
             self.calculate_variable_deltas(self.network_config.nodes_per_layer[0])
 
         self.apply_deltas(weight_variable_deltas, bias_variable_deltas)
         self.number_of_tunings += 1
-
-    def flush_stats(self):
-        print("Total improvement: " + str(self.total_improvement))

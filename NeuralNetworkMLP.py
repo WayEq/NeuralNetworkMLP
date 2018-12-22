@@ -17,7 +17,7 @@ class NeuralNetwork:
     def build(network_config, layer_builder):
         layers = []
         number_of_upstream_nodes = network_config.nodes_per_layer[0]
-        for layer_index in range(network_config.number_layers - 1):
+        for layer_index in range(len(network_config.nodes_per_layer) -1):
             layer = layer_builder(number_of_upstream_nodes, str(layer_index),
                                   network_config.nodes_per_layer[layer_index+1],
                                   network_config.node_weight_provider, network_config.node_bias_provider,

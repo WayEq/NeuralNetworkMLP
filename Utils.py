@@ -94,8 +94,7 @@ def regular_layer_error_calculator(layer_z_values, next_layer_weights, next_laye
     return errors
 
 
-def vectorized_result(label, output_node_activations):
-    num_outputs = len(output_node_activations)
+def vectorized_result(label, num_outputs):
     vectorized = [0 for _ in range(num_outputs)]
     vectorized[label] = 1
     return vectorized
@@ -108,3 +107,18 @@ def shuffle_training_data(data, training_set_size):
     shuffle(combined)
     my_inputs[:], my_desired[:] = zip(*combined)
     return my_inputs, my_desired
+
+
+def run_mini_batch(input_batch, desired_batch, neural_network, network_tuner):
+    batch_correct = 0
+    batch_total = 0
+    for i in range(0, len(desired_batch)):
+        neural_network.evaluate(input_batch[i])
+        current_desired = vectorized_result(desired_batch[i], len(neural_network.get_output_node_activations()))
+        network_tuner.post_process(current_desired, input_batch[i])
+        guessed = neural_network.get_highest_output()
+        if desired_batch[i] == guessed:
+            batch_correct += 1
+        batch_total += 1
+        network_tuner.calculate_cost(current_desired)
+    return batch_correct, batch_total

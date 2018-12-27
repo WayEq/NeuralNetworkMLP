@@ -1,4 +1,3 @@
-import Utils
 import numpy as np
 
 # Responsible for evaluating network performance and telling the network what parameters to change
@@ -13,9 +12,6 @@ def calculate_weight_gradients(node_error, upstream_activations):
 class NetworkPerformanceTuner:
     def __init__(self, network, hidden_layer_error_calculator, output_layer_error_calculator, cost_calculator,
                  learning_rate, network_config):
-        self.total_improvement = 0
-        self.cost_improvements = []
-        self.average_cost_improvement = 0
         self.network_config = network_config
         self.network = network
         self.layer_error_calculator = hidden_layer_error_calculator
@@ -23,27 +19,38 @@ class NetworkPerformanceTuner:
         self.learning_rate = learning_rate
         self.cost_calculator = cost_calculator
 
+        # Stuff that gets reset after a tuning
         self.batch_evaluations_counter = 0
         self.weight_gradient = []
         self.bias_gradient = []
         self.average_cost = 0
         self.previous_batch_cost = 0
 
-        self.number_of_tunings = 0
+    def calculate_cost(self, desired_output):
+        output_activations = self.network.get_output_node_activations()
+        cost = self.cost_calculator(desired_output, output_activations)
+        return cost
 
-    def end_of_batch_reset(self):
+    def tune(self):
+        (weight_variable_deltas, bias_variable_deltas) = self.__calculate_variable_deltas()
+
+        self.__apply_deltas(weight_variable_deltas, bias_variable_deltas)
+        self.__end_of_batch_reset()
+
+    def post_process(self, desired, input_layer_activations):
+        self.__increment_evaluations()
+
+        errors = self.__calculate_errors(desired)
+        self.__calculate_cost_gradient(errors, input_layer_activations)
+
+    def __end_of_batch_reset(self):
         self.batch_evaluations_counter = 0
         self.weight_gradient = []
         self.bias_gradient = []
         self.previous_batch_cost = self.average_cost
         self.average_cost = 0
 
-    def calculate_cost(self, desired_output):
-        output_activations = self.network.get_output_node_activations()
-        cost = self.cost_calculator(desired_output, output_activations)
-        self.average_cost = Utils.add_to_average(self.average_cost, self.batch_evaluations_counter, cost)
-
-    def calculate_layer_errors(self, desired_output):
+    def __calculate_layer_errors(self, desired_output):
         errors = []
         layers = self.network.get_layers()
         output_layer = layers[-1]
@@ -62,25 +69,25 @@ class NetworkPerformanceTuner:
             print("Calculated errors: " + str(errors))
         return errors
 
-    def increment_evaluations(self):
-        self.batch_evaluations_counter += 1
-
-    def calculate_errors(self, desired):
-        errors = self.calculate_layer_errors(desired)
+    def __calculate_errors(self, desired):
+        errors = self.__calculate_layer_errors(desired)
         return errors
 
-    def calculate_cost_gradient(self, errors, input_layer_activations):
+    def __calculate_cost_gradient(self, errors, input_layer_activations):
         layers = self.network.get_layers()
         previous_layer_activations = input_layer_activations
         for layer_index, layer in enumerate(layers):
-            self.calculate_layer_cost_gradient(errors[layer_index], layer.get_number_of_nodes(),
-                                               previous_layer_activations, layer_index)
+            self.__calculate_layer_cost_gradient(errors[layer_index], layer.get_number_of_nodes(),
+                                                 previous_layer_activations, layer_index)
             previous_layer_activations = layer.get_activations()
         if debug:
             print("Calculated weight gradient: " + str(self.weight_gradient))
             print("Calculated bias gradient: " + str(self.bias_gradient))
 
-    def calculate_layer_cost_gradient(self, node_errors, number_of_nodes, previous_layer_activations, layer_index):
+    def __increment_evaluations(self):
+        self.batch_evaluations_counter += 1
+
+    def __calculate_layer_cost_gradient(self, node_errors, number_of_nodes, previous_layer_activations, layer_index):
         needs_initialization = len(self.weight_gradient) == layer_index
         if needs_initialization:
             this_array_gradient = np.zeros((number_of_nodes, len(previous_layer_activations)))
@@ -89,41 +96,25 @@ class NetworkPerformanceTuner:
 
         # Add to the weights cost gradients
         for node_index, node_error in enumerate(node_errors):
-            self.weight_gradient[layer_index][node_index, :] \
-                += calculate_weight_gradients(node_error, previous_layer_activations)
+            weight_gradients = calculate_weight_gradients(node_error, previous_layer_activations)
+            self.weight_gradient[layer_index][node_index, :] += weight_gradients
 
         # Add to the biases cost gradients
         self.bias_gradient[layer_index] += node_errors
 
-    def calculate_variable_deltas(self, number_of_input_activations):
+    def __calculate_variable_deltas(self):
         weight_variable_deltas = []
         bias_variable_deltas = []
-        previous_layer_number_of_nodes = number_of_input_activations
         for layer_index, layer in enumerate(self.network.get_layers()):
-            needs_initialization = len(weight_variable_deltas) == layer_index
-            if needs_initialization:
-                number_of_nodes = layer.get_number_of_nodes()
-                weight_variable_deltas.append(np.array((number_of_nodes, previous_layer_number_of_nodes)))
-                bias_variable_deltas.append(np.array(number_of_nodes))
-            weight_variable_deltas[layer_index] = self.weight_gradient[layer_index] \
-                * self.learning_rate * -1 / self.batch_evaluations_counter
-
-            bias_variable_deltas[layer_index] = self.bias_gradient[layer_index] \
-                * self.learning_rate * -1 / self.batch_evaluations_counter
-            previous_layer_number_of_nodes = layer.get_number_of_nodes()
+            layer_weight_deltas = self.weight_gradient[layer_index] * self.learning_rate * -1 / self.batch_evaluations_counter
+            weight_variable_deltas.append(layer_weight_deltas)
+            layer_bias_deltas = self.bias_gradient[
+                                    layer_index] * self.learning_rate * -1 / self.batch_evaluations_counter
+            bias_variable_deltas.append(layer_bias_deltas)
         if debug:
             print("Calculated variable deltas: " + str(weight_variable_deltas) + " bias: " + str(bias_variable_deltas))
         return weight_variable_deltas, bias_variable_deltas
 
-    def apply_deltas(self, weight_variable_deltas, bias_variable_deltas):
+    def __apply_deltas(self, weight_variable_deltas, bias_variable_deltas):
         for i, layer in enumerate(self.network.get_layers()):
             layer.apply_deltas(weight_variable_deltas[i], bias_variable_deltas[i])
-
-    def tune(self):
-        if self.number_of_tunings % 1000 == 0:
-            print("Current cost: " + str(self.average_cost))
-        (weight_variable_deltas, bias_variable_deltas) = \
-            self.calculate_variable_deltas(self.network_config.nodes_per_layer[0])
-
-        self.apply_deltas(weight_variable_deltas, bias_variable_deltas)
-        self.number_of_tunings += 1

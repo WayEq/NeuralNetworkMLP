@@ -1,6 +1,7 @@
 import numpy as np
 np.set_printoptions(precision=4)
 
+debug = False
 
 class NeuralNetwork:
 
@@ -12,6 +13,8 @@ class NeuralNetwork:
         for layer in self.layers:
             layer.feed_forward(previous_layer_activations)
             previous_layer_activations = layer.get_activations()
+        if debug:
+            print("Evaluated to: " + str(self.get_output_node_activations()))
 
     @staticmethod
     def build(network_config, layer_builder):
@@ -38,3 +41,7 @@ class NeuralNetwork:
     def get_highest_output(self):
         activations = self.get_output_node_activations()
         return activations.index(max(activations))
+
+    def display(self):
+        for layer in self.layers:
+            layer.display()

@@ -55,3 +55,10 @@ class NetworkLayer:
 
     def get_biases(self):
         return self.biases
+
+    def display(self):
+        for i, bias in enumerate(self.biases):
+            print(str(self.weights[i][0]) + " bias: " + str(bias))
+            for weight in self.weights[i][1:]:
+                print(str(weight))
+            print("\n")

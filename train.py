@@ -9,24 +9,6 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 np.set_printoptions(precision=4)
 
-
-def run_mini_batch(input_batch, desired_batch):
-    batch_correct = 0
-    batch_total = 0
-    for i in range(0, len(desired_batch)):
-        neural_network.evaluate(input_batch[i])
-        network_tuner.increment_evaluations()
-        current_desired = Utils.vectorized_result(desired_batch[i], neural_network.get_output_node_activations())
-        errors = network_tuner.calculate_errors(current_desired)
-        network_tuner.calculate_cost_gradient(errors, input_batch[i])
-        guessed = neural_network.get_highest_output()
-        if desired_batch[i] == guessed:
-            batch_correct += 1
-        batch_total += 1
-        network_tuner.calculate_cost(current_desired)
-    return batch_correct, batch_total
-
-
 nodes_per_layer = [784, 16, 16, 10]
 
 config = NetworkConfig(nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
@@ -47,7 +29,7 @@ network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_erro
 
 
 mini_batch_size = 20
-epochs = 30
+epochs = 3
 
 training_set_size = 60000
 data = input_data.read_data_sets("data/")
@@ -65,11 +47,10 @@ for e in range(0, epochs):
         terminal = mini_batch_index+mini_batch_size
         input_batch = inputs[mini_batch_index:terminal]
         desired_batch = desired[mini_batch_index:terminal]
-        (correct, total) = run_mini_batch(input_batch, desired_batch)
+        (correct, total) = Utils.run_mini_batch(input_batch, desired_batch, neural_network, network_tuner)
         epoch_correct += correct
         epoch_total += total
         network_tuner.tune()
-        network_tuner.end_of_batch_reset()
         mini_batch_index = terminal
     print("Epoch totals: " + str(epoch_correct) + " / "
           + str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
@@ -79,5 +60,5 @@ for e in range(0, epochs):
 print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
 
 binary_file = open('network.bin', mode='wb')
-my_pickled_mary = pickle.dump(neural_network, binary_file)
+pickle.dump(neural_network, binary_file)
 binary_file.close()

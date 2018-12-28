@@ -16,6 +16,12 @@ class NeuralNetwork:
         if debug:
             print("Evaluated to: " + str(self.get_output_node_activations()))
 
+    def batch_evaluate(self, input_activations):
+        previous_layer_activations = input_activations
+        for layer in self.layers:
+            layer.batch_feed_forward(np.array(previous_layer_activations))
+            previous_layer_activations = layer.get_activations()
+
     @staticmethod
     def build(network_config, layer_builder):
         layers = []
@@ -41,6 +47,10 @@ class NeuralNetwork:
     def get_highest_output(self):
         activations = self.get_output_node_activations()
         return activations.index(max(activations))
+
+    def get_batched_highest_output(self):
+        activations = self.get_output_node_activations()
+        return activations.argmax(axis=0)
 
     def display(self):
         for layer in self.layers:

@@ -29,7 +29,7 @@ network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_erro
 
 
 mini_batch_size = 20
-epochs = 3
+epochs = 10
 
 training_set_size = 60000
 data = input_data.read_data_sets("data/")

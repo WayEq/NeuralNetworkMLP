@@ -19,7 +19,7 @@ def node_weight_provider(number_of_weights):
     return np.array(weights_)
 
 
-def node_bias_provider(): return 0
+def node_bias_provider(): return 0.0
 
 
 def quadratic_cost_function(desired_vector, actual_vector):
@@ -87,17 +87,20 @@ def regular_layer_error_calculator(layer_z_values, next_layer_weights, next_laye
     transposed_weights = np.array(np.transpose(np.array(next_layer_weights)))
     next_layer_errors_with_weights_applied = transposed_weights.dot(np.array(next_layer_errors))
     for i, val in enumerate(layer_z_values):
-        derived_sigmoid = sigmoid_derivative_function(val)
+        vectorized_sigmoid_derivative_function = np.vectorize(sigmoid_derivative_function)
+        derived_sigmoid = vectorized_sigmoid_derivative_function(val)
         error = derived_sigmoid * next_layer_errors_with_weights_applied[i]
         errors.append(error)
 
     return errors
 
 
-def vectorized_result(label, num_outputs):
-    vectorized = [0 for _ in range(num_outputs)]
-    vectorized[label] = 1
-    return vectorized
+def vectorized_result(labels, num_outputs):
+    a = np.array(labels)
+    vectorized = np.zeros((len(labels),num_outputs))
+    vectorized[np.arange(len(labels)), a] = 1
+
+    return np.transpose(vectorized)
 
 
 def shuffle_training_data(data, training_set_size):
@@ -111,14 +114,21 @@ def shuffle_training_data(data, training_set_size):
 
 def run_mini_batch(input_batch, desired_batch, neural_network, network_tuner):
     batch_correct = 0
-    batch_total = 0
-    for i in range(0, len(desired_batch)):
-        neural_network.evaluate(input_batch[i])
-        current_desired = vectorized_result(desired_batch[i], len(neural_network.get_output_node_activations()))
-        network_tuner.post_process(current_desired, input_batch[i])
-        guessed = neural_network.get_highest_output()
-        if desired_batch[i] == guessed:
+    transposed_input_batch = np.transpose(input_batch)
+    neural_network.batch_evaluate(transposed_input_batch)
+    current_batch_desired_outputs = vectorized_result(desired_batch, len(neural_network.get_output_node_activations()))
+    network_tuner.post_process(current_batch_desired_outputs, transposed_input_batch)
+    guessed = neural_network.get_batched_highest_output()
+    for i in range(len(desired_batch)):
+        if desired_batch[i] == guessed[i]:
             batch_correct += 1
-        batch_total += 1
-        network_tuner.calculate_cost(current_desired)
-    return batch_correct, batch_total
+    # for i in range(0, len(desired_batch)):
+    #     neural_network.evaluate(input_batch[i])
+    #     current_desired = vectorized_result(desired_batch[i], len(neural_network.get_output_node_activations()))
+    #     network_tuner.post_process(current_desired, input_batch[i])
+    #     guessed = neural_network.get_highest_output()
+    #     if desired_batch[i] == guessed:
+    #         batch_correct += 1
+    #     batch_total += 1
+    #     network_tuner.calculate_cost(current_desired)
+    return batch_correct, len(desired_batch)

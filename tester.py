@@ -22,7 +22,7 @@ load = True
 if load:
     binary_file = open('network.bin', mode='rb')
     network = pickle.load(binary_file)
-    neural_network.load(network.get_layers())
+    neural_network.load(network.layers)
 
 training_set_size = 10000
 data = input_data.read_data_sets("data/")

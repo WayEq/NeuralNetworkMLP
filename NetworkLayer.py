@@ -44,19 +44,6 @@ class NetworkLayer:
             print("For weights: " + str(self.weights) + " and bias " + str(self.biases) + " calculated z: "
                   + str(self.z_values) + " and a: " + str(self.activations))
 
-
-    def get_number_of_nodes(self):
-        return self.number_of_nodes
-
-    def get_z_values(self):
-        return self.z_values
-
-    def get_weights(self):
-        return self.weights
-
-    def get_activations(self):
-        return self.activations
-
     def set_activations(self, inputs):
         self.activations = inputs
 
@@ -64,9 +51,6 @@ class NetworkLayer:
         np_sum = np.sum(weight_deltas, axis=2)
         self.weights += np_sum
         self.biases += np.sum(bias_deltas, axis=1)
-
-    def get_biases(self):
-        return self.biases
 
     def display(self):
         for i, bias in enumerate(self.biases):

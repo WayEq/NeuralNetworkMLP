@@ -20,7 +20,7 @@ load = False
 if load:
     binary_file = open('network.bin',mode='rb')
     network = pickle.load(binary_file)
-    neural_network.load(network.get_layers())
+    neural_network.load(network.layers)
 
 learning_rate = 1
 network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_error_calculator,

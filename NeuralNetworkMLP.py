@@ -12,7 +12,7 @@ class NeuralNetwork:
         previous_layer_activations = input_activations
         for layer in self.layers:
             layer.feed_forward(previous_layer_activations)
-            previous_layer_activations = layer.get_activations()
+            previous_layer_activations = layer.activations
         if debug:
             print("Evaluated to: " + str(self.get_output_node_activations()))
 
@@ -20,7 +20,7 @@ class NeuralNetwork:
         previous_layer_activations = input_activations
         for layer in self.layers:
             layer.batch_feed_forward(np.array(previous_layer_activations))
-            previous_layer_activations = layer.get_activations()
+            previous_layer_activations = layer.activations
 
     @staticmethod
     def build(network_config, layer_builder):
@@ -32,17 +32,14 @@ class NeuralNetwork:
                                   network_config.node_weight_provider, network_config.node_bias_provider,
                                   network_config.sigmoid_function)
             layers.append(layer)
-            number_of_upstream_nodes = layer.get_number_of_nodes()
+            number_of_upstream_nodes = layer.number_of_nodes
         return NeuralNetwork(layers)
 
     def load(self, layers):
         self.layers = layers
 
-    def get_layers(self):
-        return self.layers
-
     def get_output_node_activations(self):
-        return self.layers[-1].get_activations()
+        return self.layers[-1].activations
 
     def get_highest_output(self):
         activations = self.get_output_node_activations()

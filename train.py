@@ -9,56 +9,78 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 np.set_printoptions(precision=4)
 
-nodes_per_layer = [784, 16, 16, 10]
 
-config = NetworkConfig(nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
-                       Utils.sigmoid_function, Utils.sigmoid_derivative_function)
+def execute_verification(data, epoch, neural_network):
+    size, inputs, desired = Utils.load_mnist_images(data, 1)
+    verification_correct = 0
+    verification_total = 0
+    for e in range(0, size):
+        neural_network.evaluate(inputs[e])
+        output = neural_network.get_highest_output()
+        if output == desired[e]:
+            verification_correct += 1
+        verification_total += 1
 
-neural_network = NeuralNetwork.build(config, NetworkLayer.build)
-
-load = False
-if load:
-    binary_file = open('network.bin',mode='rb')
-    network = pickle.load(binary_file)
-    neural_network.load(network.layers)
-
-learning_rate = 1
-network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_error_calculator,
-                                        Utils.cross_entropy_output_layer_calculator,
-                                        Utils.cross_entropy_cost_function, learning_rate, config)
+    print("Verification accuracy (" + str(epoch) + "): "
+          + str(verification_correct) + " / " + str(verification_total) + " (" +
+          str(verification_correct / verification_total) + ")")
 
 
-mini_batch_size = 20
-epochs = 10
+def train():
+    nodes_per_layer = [784, 30, 10]
+    mini_batch_size = 10
+    epochs = 400
+    learning_rate = .5
+    load = False
 
-training_set_size = 60000
-data = input_data.read_data_sets("data/")
+    config = NetworkConfig(nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
+                           Utils.sigmoid_function, Utils.sigmoid_derivative_function)
+
+    neural_network = NeuralNetwork.build(config, NetworkLayer.build)
 
 
-total_correct = 0
-total_total = 0
+    network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_error_calculator,
+                                            Utils.cross_entropy_output_layer_calculator,
+                                            Utils.batch_cross_entropy_cost_function, learning_rate, config)
 
-for e in range(0, epochs):
-    inputs, desired = Utils.shuffle_training_data(data, training_set_size)
-    mini_batch_index = 0
-    epoch_correct = 0
-    epoch_total = 0
-    while mini_batch_index < len(inputs):
-        terminal = mini_batch_index+mini_batch_size
-        input_batch = inputs[mini_batch_index:terminal]
-        desired_batch = desired[mini_batch_index:terminal]
-        (correct, total) = Utils.run_mini_batch(input_batch, desired_batch, neural_network, network_tuner)
-        epoch_correct += correct
-        epoch_total += total
-        network_tuner.tune()
-        mini_batch_index = terminal
-    print("Epoch totals: " + str(epoch_correct) + " / "
-          + str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
-    total_correct += epoch_correct
-    total_total += epoch_total
 
-print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
+    if load:
+        binary_file = open('network.bin', mode='rb')
+        network = pickle.load(binary_file)
+        neural_network.load(network.layers)
 
-binary_file = open('network.bin', mode='wb')
-pickle.dump(neural_network, binary_file)
-binary_file.close()
+    training_set_size = 1000
+    data = input_data.read_data_sets("data/")
+    total_correct = 0
+    total_total = 0
+    for e in range(0, epochs):
+        size, inputs, desired = Utils.load_mnist_images(data, 0, shuffled=True)
+        mini_batch_index = 0
+        epoch_correct = epoch_total = 0
+        epoch_cost = 0
+        while mini_batch_index < len(inputs):
+            terminal = mini_batch_index+mini_batch_size
+            input_batch = inputs[mini_batch_index:terminal]
+            desired_batch = desired[mini_batch_index:terminal]
+            (correct, total) = Utils.run_mini_batch(input_batch, desired_batch, neural_network, network_tuner)
+            epoch_correct += correct
+            epoch_total += total
+            batch_cost = network_tuner.calculate_batch_cost(desired_batch)
+            epoch_cost += batch_cost
+            network_tuner.tune()
+            mini_batch_index = terminal
+        #print("Epoch totals: " + str(epoch_correct) + " / "
+              #+ str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
+        total_correct += epoch_correct
+        total_total += epoch_total
+        print("Epoch ("+ str(e) + ") average training cost: " + str(epoch_cost / (len(inputs) / mini_batch_size)))
+        execute_verification(data, e, neural_network)
+
+    print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
+
+    binary_file = open('network.bin', mode='wb')
+    pickle.dump(neural_network, binary_file)
+    binary_file.close()
+
+
+train()

@@ -25,7 +25,7 @@ class NetworkPerformanceTuner:
         self.average_cost = 0
         self.previous_batch_cost = 0
 
-    def calculate_cost(self, desired_output):
+    def calculate_batch_cost(self, desired_output):
         output_activations = self.network.get_output_node_activations()
         cost = self.cost_calculator(desired_output, output_activations)
         return cost

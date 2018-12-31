@@ -31,14 +31,12 @@ def quadratic_cost_function(desired_vector, actual_vector):
     return reduce(lambda x, y: x + single_node_quadratic_cost(y[0], y[1]), pairs, first)
 
 
-def cross_entropy_cost_function(desired_vector, actual_vector):
+def batch_cross_entropy_cost_function(desired_vector, actual_vector):
     if len(desired_vector) != len(actual_vector):
         return None
-
-    summation = 0
-    for i, desired in enumerate(desired_vector):
-        summation += single_node_cross_entropy_cost(desired, actual_vector[i])
-    return summation * -1 / len(desired_vector)
+    vectorized = vectorized_result(desired_vector, len(desired_vector))
+    summation = np.vectorize(np.vectorize(single_node_cross_entropy_cost))(vectorized, actual_vector)
+    return summation.sum() * -1 / len(desired_vector)
 
 
 def single_node_quadratic_cost(desired_value, actual_value):
@@ -94,7 +92,6 @@ def regular_layer_error_calculator(layer_z_values, next_layer_weights, next_laye
 
     return errors
 
-
 def vectorized_result(labels, num_outputs):
     a = np.array(labels)
     vectorized = np.zeros((len(labels),num_outputs))
@@ -103,13 +100,15 @@ def vectorized_result(labels, num_outputs):
     return np.transpose(vectorized)
 
 
-def shuffle_training_data(data, training_set_size):
-    my_inputs = list(data[0]._images[0:training_set_size])
-    my_desired = list(data[0]._labels[0:training_set_size])
-    combined = list(zip(my_inputs, my_desired))
-    shuffle(combined)
-    my_inputs[:], my_desired[:] = zip(*combined)
-    return my_inputs, my_desired
+def load_mnist_images(data, set, shuffled=False):
+    size = len(data[set]._images)
+    inputs = list(data[set]._images[0:size])
+    desired = list(data[set]._labels[0:size])
+    if shuffled == True:
+        combined = list(zip(inputs, desired))
+        shuffle(combined)
+        inputs[:], desired[:] = zip(*combined)
+    return size, inputs, desired
 
 
 def run_mini_batch(input_batch, desired_batch, neural_network, network_tuner):

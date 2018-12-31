@@ -21,7 +21,7 @@ neural_network = NeuralNetwork.build(config, NetworkLayer.NetworkLayer.build)
 learning_rate = 1
 network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_error_calculator,
                                         Utils.cross_entropy_output_layer_calculator,
-                                        Utils.cross_entropy_cost_function, learning_rate, config)
+                                        Utils.batch_cross_entropy_cost_function, learning_rate, config)
 
 
 inputs = np.arange(6.0).reshape(2,3)

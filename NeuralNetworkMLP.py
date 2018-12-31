@@ -43,7 +43,7 @@ class NeuralNetwork:
 
     def get_highest_output(self):
         activations = self.get_output_node_activations()
-        return activations.index(max(activations))
+        return activations.argmax(axis=0)
 
     def get_batched_highest_output(self):
         activations = self.get_output_node_activations()

@@ -31,6 +31,8 @@ desired = data[2]._labels[0:training_set_size]
 
 total_correct = 0
 total_total = 0
+show_images = False
+
 for e in range(0,training_set_size):
     neural_network.evaluate(inputs[e])
     output = neural_network.get_highest_output()
@@ -38,10 +40,11 @@ for e in range(0,training_set_size):
     if output == desired[e]:
         total_correct += 1
     total_total += 1
-    img1_2d = np.reshape(inputs[e], (28, 28))
-    #show it
-    plt.subplot(111)
-    plt.imshow(img1_2d, cmap=plt.get_cmap('gray'))
-    plt.show()
+    if show_images:
+        img1_2d = np.reshape(inputs[e], (28, 28))
+        #show it
+        plt.subplot(111)
+        plt.imshow(img1_2d, cmap=plt.get_cmap('gray'))
+        plt.show()
 
-print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
+    print("Running accuracy " + str(e) + ": " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")

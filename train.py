@@ -27,21 +27,21 @@ def execute_verification(data, epoch, neural_network):
 
 
 def train():
-    nodes_per_layer = [784, 30, 10]
+    nodes_per_layer = [784, 100, 10]
     mini_batch_size = 10
-    epochs = 400
-    learning_rate = .5
+    epochs = 60
+    learning_rate = .1
     load = False
-
+    regularization_term = 5
+    training_set_size = 1000
     config = NetworkConfig(nodes_per_layer, Utils.node_weight_provider, Utils.node_bias_provider,
                            Utils.sigmoid_function, Utils.sigmoid_derivative_function)
 
     neural_network = NeuralNetwork.build(config, NetworkLayer.build)
 
-
     network_tuner = NetworkPerformanceTuner(neural_network, Utils.regular_layer_error_calculator,
                                             Utils.cross_entropy_output_layer_calculator,
-                                            Utils.batch_cross_entropy_cost_function, learning_rate, config)
+                                            Utils.batch_cross_entropy_cost_function_with_l2_regularize, learning_rate, config, training_set_size, regularization_term)
 
 
     if load:
@@ -49,15 +49,15 @@ def train():
         network = pickle.load(binary_file)
         neural_network.load(network.layers)
 
-    training_set_size = 1000
     data = input_data.read_data_sets("data/")
     total_correct = 0
     total_total = 0
     for e in range(0, epochs):
-        size, inputs, desired = Utils.load_mnist_images(data, 0, shuffled=True)
+        size, inputs, desired = Utils.load_mnist_images(data, 0, training_set_size, shuffled=True)
         mini_batch_index = 0
         epoch_correct = epoch_total = 0
         epoch_cost = 0
+        print_batch_totals = False
         while mini_batch_index < len(inputs):
             terminal = mini_batch_index+mini_batch_size
             input_batch = inputs[mini_batch_index:terminal]
@@ -69,15 +69,16 @@ def train():
             epoch_cost += batch_cost
             network_tuner.tune()
             mini_batch_index = terminal
-        #print("Epoch totals: " + str(epoch_correct) + " / "
-              #+ str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
+            if print_batch_totals:
+                print("Epoch totals: " + str(epoch_correct) + " / "
+                      + str(epoch_total) + " (" + str(epoch_correct/epoch_total) + ")")
         total_correct += epoch_correct
         total_total += epoch_total
-        print("Epoch ("+ str(e) + ") average training cost: " + str(epoch_cost / (len(inputs) / mini_batch_size)))
+        #print("Epoch ("+ str(e) + ") average training cost: " + str(epoch_cost / (len(inputs) / mini_batch_size)))
+
         execute_verification(data, e, neural_network)
 
     print("Totals: " + str(total_correct) + " / " + str(total_total) + " (" + str(total_correct / total_total) + ")")
-
     binary_file = open('network.bin', mode='wb')
     pickle.dump(neural_network, binary_file)
     binary_file.close()

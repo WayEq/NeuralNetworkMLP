@@ -49,6 +49,10 @@ class NeuralNetwork:
         activations = self.get_output_node_activations()
         return activations.argmax(axis=0)
 
+    def get_weights(self):
+        weights = list(map(lambda layer: layer.weights, self.layers))
+        return weights
+
     def display(self):
         for layer in self.layers:
             layer.display()

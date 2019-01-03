@@ -48,9 +48,8 @@ class NetworkLayer:
         self.activations = inputs
 
     def apply_deltas(self, weight_deltas, bias_deltas):
-        np_sum = np.sum(weight_deltas, axis=2)
-        self.weights += np_sum
-        self.biases += np.sum(bias_deltas, axis=1)
+        self.weights += weight_deltas
+        self.biases += bias_deltas
 
     def display(self):
         for i, bias in enumerate(self.biases):

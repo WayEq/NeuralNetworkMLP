@@ -31,12 +31,27 @@ def quadratic_cost_function(desired_vector, actual_vector):
     return reduce(lambda x, y: x + single_node_quadratic_cost(y[0], y[1]), pairs, first)
 
 
+def calculate_l2_cost(weights, training_data_size, regularization_term):
+
+    squares = np.square(weights)
+    accumulator = number_of_weights = 0
+    for i in squares:
+        accumulator += np.sum(i)
+        number_of_weights += i.shape[0] * i.shape[1]
+    return accumulator * regularization_term / (2 * training_data_size)
+
 def batch_cross_entropy_cost_function(desired_vector, actual_vector):
-    if len(desired_vector) != len(actual_vector):
+    batch_length = len(actual_vector)
+    if len(desired_vector) != batch_length:
         return None
     vectorized = vectorized_result(desired_vector, len(desired_vector))
     summation = np.vectorize(np.vectorize(single_node_cross_entropy_cost))(vectorized, actual_vector)
-    return summation.sum() * -1 / len(desired_vector)
+    cost = summation.sum() * -1 / batch_length
+    return cost
+
+
+def batch_cross_entropy_cost_function_with_l2_regularize(desired_vector, actual_vector, weights, training_data_size, regularization_term=None):
+    return batch_cross_entropy_cost_function(desired_vector,actual_vector) + calculate_l2_cost(weights, training_data_size, regularization_term)
 
 
 def single_node_quadratic_cost(desired_value, actual_value):
@@ -100,8 +115,9 @@ def vectorized_result(labels, num_outputs):
     return np.transpose(vectorized)
 
 
-def load_mnist_images(data, set, shuffled=False):
-    size = len(data[set]._images)
+def load_mnist_images(data, set, size=None, shuffled=False):
+    if size is None:
+        size = len(data[set]._images)
     inputs = list(data[set]._images[0:size])
     desired = list(data[set]._labels[0:size])
     if shuffled == True:
